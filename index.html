@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Revolution | The Future of Urban Mobility</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        orange: {
+                            400: '#fb923c',
+                            500: '#f97316',
+                            900: '#7c2d12',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 antialiased selection:bg-orange-500 selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons (Implemented as Components since we don't have lucide-react in browser) ---
+        
+        const IconBase = ({ children, className, size = 24, fill = "none" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+
+        const Zap = (props) => <IconBase {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>;
+        const Battery = (props) => <IconBase {...props}><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/></IconBase>;
+        const Wind = (props) => <IconBase {...props}><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></IconBase>;
+        const Clock = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>;
+        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>;
+        const ChevronDown = (props) => <IconBase {...props}><polyline points="6 9 12 15 18 9"/></IconBase>;
+        const ChevronUp = (props) => <IconBase {...props}><polyline points="18 15 12 9 6 15"/></IconBase>;
+        const MapPin = (props) => <IconBase {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></IconBase>;
+        const Phone = (props) => <IconBase {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></IconBase>;
+        const Mail = (props) => <IconBase {...props}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></IconBase>;
+        const Instagram = (props) => <IconBase {...props}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></IconBase>;
+        const Facebook = (props) => <IconBase {...props}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></IconBase>;
+        const Twitter = (props) => <IconBase {...props}><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></IconBase>;
+        const ArrowRight = (props) => <IconBase {...props}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></IconBase>;
+        const ShieldCheck = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></IconBase>;
+        const Smartphone = (props) => <IconBase {...props}><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></IconBase>;
+        const Menu = (props) => <IconBase {...props}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></IconBase>;
+        const X = (props) => <IconBase {...props}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconBase>;
+
+
+        // --- UI Components ---
+
+        const Button = ({ children, variant = 'primary', className = '', onClick }) => {
+            const baseStyle = "px-8 py-3 rounded-full font-bold transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2";
+            const variants = {
+                primary: "bg-orange-500 hover:bg-orange-400 text-slate-900 shadow-lg shadow-orange-500/30",
+                secondary: "bg-slate-800 hover:bg-slate-700 text-white border border-slate-600",
+                outline: "bg-transparent border-2 border-orange-500 text-orange-500 hover:bg-orange-500/10"
+            };
+
+            return (
+                <button onClick={onClick} className={`${baseStyle} ${variants[variant]} ${className}`}>
+                {children}
+                </button>
+            );
+        };
+
+        const SectionHeading = ({ title, subtitle, centered = true }) => (
+            <div className={`mb-12 ${centered ? 'text-center' : 'text-left'}`}>
+                <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+                {title}
+                </h2>
+                <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+                {subtitle}
+                </p>
+            </div>
+        );
+
+        const FeatureCard = ({ icon: Icon, title, desc }) => (
+            <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 hover:border-orange-500/50 transition-colors group">
+                <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-500/20 transition-colors">
+                <Icon className="text-orange-400" size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+                <p className="text-slate-400">{desc}</p>
+            </div>
+        );
+
+        const FAQItem = ({ question, answer, isOpen, onClick }) => (
+            <div className="border-b border-slate-700 last:border-0">
+                <button 
+                className="w-full py-6 flex items-center justify-between text-left focus:outline-none"
+                onClick={onClick}
+                >
+                <span className="text-lg font-medium text-slate-200">{question}</span>
+                {isOpen ? <ChevronUp className="text-orange-500" /> : <ChevronDown className="text-slate-500" />}
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-48 pb-6' : 'max-h-0'}`}>
+                <p className="text-slate-400 leading-relaxed">{answer}</p>
+                </div>
+            </div>
+        );
+
+        // --- Main Application ---
+
+        function App() {
+            const [activeModel, setActiveModel] = useState('eco');
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [openFAQ, setOpenFAQ] = useState(0);
+            const [scrolled, setScrolled] = useState(false);
+            
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const scrollToSection = (id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                setIsMenuOpen(false);
+                }
+            };
+
+            const models = {
+                eco: {
+                name: "EcoRide 360",
+                tagline: "The Ultimate City Commuter",
+                price: "₹89,999",
+                specs: [
+                    { label: "Range", value: "85 km", icon: MapPin },
+                    { label: "Top Speed", value: "55 km/h", icon: Wind },
+                    { label: "Charge Time", value: "3.5 Hours", icon: Clock },
+                    { label: "Motor", value: "1200W Hub", icon: Zap },
+                ],
+                features: [
+                    "Lightweight Aluminum Frame",
+                    "Removable Battery Pack",
+                    "Digital Anti-Theft Lock",
+                    "Regenerative Braking"
+                ],
+                description: "Designed for the urban jungle. The EcoRide 360 is nimble, efficient, and perfect for your daily commute to work or college. Say goodbye to gas stations forever."
+                },
+                sport: {
+                name: "Thunderbolt GT",
+                tagline: "Unleash Pure Electric Power",
+                price: "₹1,59,999",
+                specs: [
+                    { label: "Range", value: "140 km", icon: MapPin },
+                    { label: "Top Speed", value: "95 km/h", icon: Wind },
+                    { label: "Charge Time", value: "1 Hour (Fast)", icon: Clock },
+                    { label: "Motor", value: "3000W Mid-Drive", icon: Zap },
+                ],
+                features: [
+                    "Sport & Turbo Modes",
+                    "Bluetooth App Connectivity",
+                    "Dual Disc ABS Brakes",
+                    "Cruise Control System"
+                ],
+                description: "For those who crave adrenaline. The Thunderbolt GT combines aggressive styling with raw torque. Conquer highways and steep inclines with ease."
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-900 text-slate-200 font-sans">
+                
+                {/* Navigation */}
+                <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-slate-900/90 backdrop-blur-md shadow-xl border-b border-slate-800' : 'bg-transparent'}`}>
+                    <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Zap className="text-orange-500 fill-orange-500" size={28} />
+                        <span className="text-2xl font-bold text-white tracking-tighter">E-<span className="text-orange-500">REVOLUTION</span></span>
+                    </div>
+
+                    {/* Desktop Nav */}
+                    <div className="hidden md:flex items-center gap-8">
+                        {['Models', 'Features', 'Stories', 'FAQ'].map((item) => (
+                        <button 
+                            key={item} 
+                            onClick={() => scrollToSection(item.toLowerCase())}
+                            className="text-sm font-medium hover:text-orange-400 transition-colors"
+                        >
+                            {item}
+                        </button>
+                        ))}
+                        <Button onClick={() => scrollToSection('contact')}>Book Test Ride</Button>
+                    </div>
+
+                    {/* Mobile Menu Toggle */}
+                    <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                        {isMenuOpen ? <X /> : <Menu />}
+                    </button>
+                    </div>
+
+                    {/* Mobile Nav Dropdown */}
+                    {isMenuOpen && (
+                    <div className="md:hidden bg-slate-900 border-b border-slate-800 absolute w-full px-6 py-4 flex flex-col gap-4 shadow-2xl">
+                        {['Models', 'Features', 'Stories', 'FAQ'].map((item) => (
+                        <button 
+                            key={item} 
+                            onClick={() => scrollToSection(item.toLowerCase())}
+                            className="text-left py-2 font-medium hover:text-orange-400"
+                        >
+                            {item}
+                        </button>
+                        ))}
+                        <Button className="w-full" onClick={() => scrollToSection('contact')}>Book Test Ride</Button>
+                    </div>
+                    )}
+                </nav>
+
+                {/* Hero Section */}
+                <header className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+                    {/* Abstract Background Elements */}
+                    <div className="absolute top-0 right-0 w-1/2 h-full bg-orange-500/5 blur-[120px] rounded-full pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-1/3 h-2/3 bg-blue-500/5 blur-[100px] rounded-full pointer-events-none" />
+
+                    <div className="max-w-7xl mx-auto px-6 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <div className="inline-block px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 font-semibold text-sm mb-6">
+                        🌱 The Future of Urban Mobility
+                        </div>
+                        <h1 className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6">
+                        Ride the <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400">Silent Revolution.</span>
+                        </h1>
+                        <p className="text-xl text-slate-400 mb-8 max-w-lg leading-relaxed">
+                        Experience zero emissions, instant torque, and minimal maintenance. Join thousands of riders switching to E-Revolution today.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                        <Button onClick={() => scrollToSection('models')}>
+                            Explore Models <ArrowRight size={18} />
+                        </Button>
+                        <Button variant="secondary" onClick={() => scrollToSection('contact')}>
+                            Inquire Now
+                        </Button>
+                        </div>
+                        
+                        <div className="mt-12 flex items-center gap-8 text-slate-500">
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck size={20} className="text-orange-500" />
+                            <span className="text-sm font-medium">3-Year Warranty</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Wind size={20} className="text-orange-500" />
+                            <span className="text-sm font-medium">Zero Emissions</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    {/* Hero Image / Graphic Placeholder */}
+                    <div className="relative">
+                        <div className="aspect-square rounded-full bg-gradient-to-tr from-slate-800 to-slate-900 border border-slate-700 flex items-center justify-center shadow-2xl shadow-orange-900/20 relative overflow-hidden group">
+                        {/* Animated decorative rings */}
+                        <div className="absolute inset-0 border-[40px] border-slate-800/50 rounded-full scale-90" />
+                        <div className="absolute inset-0 border-[80px] border-slate-800/30 rounded-full scale-75" />
+                        
+                        <div className="text-center z-10 relative">
+                            <span className="text-9xl mb-4 block animate-bounce">🛵</span>
+                            <p className="text-slate-500 font-mono text-sm uppercase tracking-widest mt-4">E-Revolution Series</p>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </header>
+
+                {/* Model Showcase Section */}
+                <section id="models" className="py-24 bg-slate-900 relative">
+                    <div className="max-w-7xl mx-auto px-6">
+                    <SectionHeading 
+                        title="Choose Your Ride" 
+                        subtitle="Two distinct models engineered for different lifestyles. Whether you need efficiency or adrenaline, we have the perfect ride for you."
+                    />
+
+                    {/* Toggle Switch */}
+                    <div className="flex justify-center mb-12">
+                        <div className="bg-slate-800 p-1 rounded-full inline-flex">
+                        {Object.keys(models).map((key) => (
+                            <button
+                            key={key}
+                            onClick={() => setActiveModel(key)}
+                            className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${
+                                activeModel === key 
+                                ? 'bg-orange-500 text-slate-900 shadow-lg' 
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                            >
+                            {models[key].name}
+                            </button>
+                        ))}
+                        </div>
+                    </div>
+
+                    {/* Model Details Card */}
+                    <div className="bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 shadow-2xl">
+                        <div className="grid lg:grid-cols-2">
+                        {/* Visual Side */}
+                        <div className="bg-gradient-to-br from-slate-700 to-slate-800 p-12 flex flex-col items-center justify-center relative min-h-[400px]">
+                            <div className="text-[10rem] opacity-20 select-none grayscale contrast-200 absolute">
+                            {activeModel === 'eco' ? '🌱' : '⚡'}
+                            </div>
+                            <h3 className="text-4xl font-bold text-white relative z-10 text-center">
+                            {models[activeModel].name}
+                            </h3>
+                            <p className="text-orange-400 font-medium mt-2 relative z-10 uppercase tracking-widest">
+                            {models[activeModel].tagline}
+                            </p>
+                            <div className="mt-8 bg-slate-900/50 backdrop-blur-md px-6 py-2 rounded-lg border border-white/10 relative z-10">
+                            <span className="text-sm text-slate-400 mr-2">Starting at</span>
+                            <span className="text-2xl font-bold text-white">{models[activeModel].price}</span>
+                            </div>
+                        </div>
+
+                        {/* Specs Side */}
+                        <div className="p-8 lg:p-12">
+                            <p className="text-slate-300 text-lg mb-8 leading-relaxed">
+                            {models[activeModel].description}
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-6 mb-8">
+                            {models[activeModel].specs.map((spec, idx) => (
+                                <div key={idx} className="flex flex-col">
+                                <div className="flex items-center gap-2 mb-1 text-orange-500">
+                                    <spec.icon size={18} />
+                                    <span className="text-xs font-bold uppercase tracking-wider">{spec.label}</span>
+                                </div>
+                                <span className="text-xl font-bold text-white">{spec.value}</span>
+                                </div>
+                            ))}
+                            </div>
+
+                            <div className="space-y-3 mb-10">
+                            {models[activeModel].features.map((feature, idx) => (
+                                <div key={idx} className="flex items-center gap-3">
+                                <CheckCircle className="text-orange-500 flex-shrink-0" size={20} />
+                                <span className="text-slate-300">{feature}</span>
+                                </div>
+                            ))}
+                            </div>
+
+                            <Button className="w-full md:w-auto">
+                            Pre-order {models[activeModel].name}
+                            </Button>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </section>
+
+                {/* Features Grid */}
+                <section id="features" className="py-24 bg-slate-800/30">
+                    <div className="max-w-7xl mx-auto px-6">
+                    <SectionHeading 
+                        title="Why Go Electric?" 
+                        subtitle="It's not just about saving the planet. It's about upgrading your entire riding experience."
+                    />
+                    
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <FeatureCard 
+                        icon={Zap}
+                        title="Instant Torque"
+                        desc="No gears, no clutch, no lag. Feel the immediate power delivery the moment you twist the throttle."
+                        />
+                        <FeatureCard 
+                        icon={Battery}
+                        title="Smart Charging"
+                        desc="Charge anywhere with a standard outlet. Our advanced BMS protects battery health for 10+ years."
+                        />
+                        <FeatureCard 
+                        icon={Smartphone}
+                        title="Connected Ride"
+                        desc="Track your ride stats, locate your scooter, and lock it remotely using our dedicated mobile app."
+                        />
+                    </div>
+                    </div>
+                </section>
+
+                {/* Stories / Testimonials */}
+                <section id="stories" className="py-24 bg-slate-900">
+                    <div className="max-w-7xl mx-auto px-6">
+                    <SectionHeading 
+                        title="Rider Stories" 
+                        subtitle="Real people. Real miles. See how VoltMotion is changing the way they move."
+                    />
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* Story 1 */}
+                        <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 relative">
+                        <div className="absolute top-8 right-8 text-orange-500 opacity-20">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21L14.017 18C14.017 16.896 14.914 16 16.017 16H19V13H14V6H21V13H17.017C17.017 14.657 15.674 16 14.017 16V21ZM5 21L5 18C5 16.896 5.896 16 7 16H10V13H5V6H12V13H8C8 14.657 6.657 16 5 16V21Z"/></svg>
+                        </div>
+                        <p className="text-slate-300 text-lg italic mb-6 relative z-10">
+                            "I used to spend ₹4,500 a month on petrol for my commute. With the EcoRide 360, my electricity bill barely went up by ₹200. It paid for itself in a year, and the silence while riding is therapeutic."
+                        </p>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gray-600 rounded-full overflow-hidden flex items-center justify-center text-xl">👨‍💻</div>
+                            <div>
+                            <h4 className="text-white font-bold">Sarah Jenkins</h4>
+                            <p className="text-sm text-orange-400">Software Engineer • EcoRide Owner</p>
+                            </div>
+                        </div>
+                        </div>
+
+                        {/* Story 2 */}
+                        <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 relative">
+                        <div className="absolute top-8 right-8 text-orange-500 opacity-20">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21L14.017 18C14.017 16.896 14.914 16 16.017 16H19V13H14V6H21V13H17.017C17.017 14.657 15.674 16 14.017 16V21ZM5 21L5 18C5 16.896 5.896 16 7 16H10V13H5V6H12V13H8C8 14.657 6.657 16 5 16V21Z"/></svg>
+                        </div>
+                        <p className="text-slate-300 text-lg italic mb-6 relative z-10">
+                            "The acceleration on the Thunderbolt GT is insane. I weave through traffic effortlessly. Plus, the removable battery means I can charge it inside my apartment. Game changer."
+                        </p>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gray-600 rounded-full overflow-hidden flex items-center justify-center text-xl">🎨</div>
+                            <div>
+                            <h4 className="text-white font-bold">David Chen</h4>
+                            <p className="text-sm text-orange-400">Graphic Designer • Thunderbolt Owner</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </section>
+
+                {/* FAQ Section */}
+                <section id="faq" className="py-24 bg-slate-800/30">
+                    <div className="max-w-3xl mx-auto px-6">
+                    <SectionHeading title="Frequently Asked Questions" subtitle="Everything you need to know about owning an E-Revolution." />
+                    
+                    <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6 md:p-8">
+                        <FAQItem 
+                        question="Do I need a special license to ride these?"
+                        answer="For the EcoRide 360, no special license is required in most states as it falls under the e-bike category. The Thunderbolt GT requires a standard motorcycle or scooter license due to its higher speed capabilities."
+                        isOpen={openFAQ === 0}
+                        onClick={() => setOpenFAQ(openFAQ === 0 ? -1 : 0)}
+                        />
+                        <FAQItem 
+                        question="How long does the battery last?"
+                        answer="Our batteries are rated for 1,000 full charge cycles, which typically translates to 3-5 years of daily use. After that, they hold about 80% capacity."
+                        isOpen={openFAQ === 1}
+                        onClick={() => setOpenFAQ(openFAQ === 1 ? -1 : 1)}
+                        />
+                        <FAQItem 
+                        question="Can I charge it at home?"
+                        answer="Absolutely! Both models come with a portable charger that plugs into any standard household outlet (110V/220V). No special installation needed."
+                        isOpen={openFAQ === 2}
+                        onClick={() => setOpenFAQ(openFAQ === 2 ? -1 : 2)}
+                        />
+                        <FAQItem 
+                        question="What about servicing and maintenance?"
+                        answer="Electric vehicles have 90% fewer moving parts than gas scooters. No oil changes, no spark plugs, no belts. We recommend a general check-up of brakes and tires every 6 months."
+                        isOpen={openFAQ === 3}
+                        onClick={() => setOpenFAQ(openFAQ === 3 ? -1 : 3)}
+                        />
+                    </div>
+                    </div>
+                </section>
+
+                {/* Inquiry Form Section */}
+                <section id="contact" className="py-24 bg-gradient-to-br from-orange-900 to-slate-900 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-slate-900/50"></div>
+                    <div className="max-w-6xl mx-auto px-6 relative z-10 grid lg:grid-cols-2 gap-16 items-center">
+                    
+                    <div>
+                        <h2 className="text-4xl font-bold text-white mb-6">Ready to Experience the Future?</h2>
+                        <p className="text-slate-300 text-lg mb-8">
+                        Book a free test ride at our dealership or request a callback. Our team is ready to answer any questions you might have.
+                        </p>
+                        
+                        <div className="space-y-6">
+                        <div className="flex items-center gap-4 text-slate-300">
+                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-orange-500">
+                            <MapPin size={20} />
+                            </div>
+                            <span>F/1, Sainath Complex, Nana Bazar, Vallabh Vidyanagar - 388120</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-slate-300">
+                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-orange-500">
+                            <Phone size={20} />
+                            </div>
+                            <span>+91 98257 14448</span>
+                        </div>
+                        <div className="flex items-center gap-4 text-slate-300">
+                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-orange-500">
+                            <Mail size={20} />
+                            </div>
+                            <span>sohilpandya.mca@charusat.ac.in</span>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-800/80 backdrop-blur-md p-8 rounded-3xl border border-slate-700 shadow-2xl">
+                        <h3 className="text-2xl font-bold text-white mb-6">Inquiry Form</h3>
+                        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">First Name</label>
+                            <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 transition-colors" placeholder="John" />
+                            </div>
+                            <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Last Name</label>
+                            <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 transition-colors" placeholder="Doe" />
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Email Address</label>
+                            <input type="email" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 transition-colors" placeholder="john@example.com" />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Interested Model</label>
+                            <select className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 transition-colors appearance-none">
+                            <option>EcoRide 360</option>
+                            <option>Thunderbolt GT</option>
+                            <option>Unsure / Need Advice</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Message (Optional)</label>
+                            <textarea className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 transition-colors h-24 resize-none" placeholder="I'd like to book a test ride for this weekend..."></textarea>
+                        </div>
+
+                        <Button className="w-full text-lg">Send Inquiry</Button>
+                        </form>
+                    </div>
+
+                    </div>
+                </section>
+
+                {/* Footer */}
+                <footer className="bg-slate-950 py-12 border-t border-slate-900">
+                    <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+                    <div className="flex flex-col items-center md:items-start">
+                        <div className="flex items-center gap-2 mb-2">
+                        <Zap className="text-orange-500 fill-orange-500" size={24} />
+                        <span className="text-xl font-bold text-white">E-<span className="text-orange-500">REVOLUTION</span></span>
+                        </div>
+                        <p className="text-slate-500 text-sm">© 2024 E-Revolution EV. All rights reserved.</p>
+                    </div>
+
+                    <div className="flex gap-6">
+                        <a href="#" className="text-slate-400 hover:text-orange-500 transition-colors"><Instagram size={24} /></a>
+                        <a href="#" className="text-slate-400 hover:text-orange-500 transition-colors"><Facebook size={24} /></a>
+                        <a href="#" className="text-slate-400 hover:text-orange-500 transition-colors"><Twitter size={24} /></a>
+                    </div>
+                    </div>
+                </footer>
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
